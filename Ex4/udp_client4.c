@@ -83,6 +83,7 @@ float str_cli1(FILE *fp, int sockfd, struct sockaddr *addr, int addrlen, int *le
 	float time_inv = 0.0;
 	struct timeval sendt, recvt;
 	ci = 0;
+	int counter = 0;
 
 	fseek(fp, 0, SEEK_END);
 	lsize = *len = ftell(fp);
@@ -104,7 +105,7 @@ float str_cli1(FILE *fp, int sockfd, struct sockaddr *addr, int addrlen, int *le
 	while (ci <= lsize)
 	{
 		gettimeofday(&sendt, NULL); //get the current time
-
+		counter = (counter == 3) ? 0 : counter;
 		if ((lsize + 1 - ci) <= DATALEN)
 			slen = lsize + 1 - ci;
 		else
@@ -116,24 +117,26 @@ float str_cli1(FILE *fp, int sockfd, struct sockaddr *addr, int addrlen, int *le
 			exit(1);
 		}
 		else printf("%d data sent\n", n);
-		if ((n = recvfrom(sockfd, &ack, 2, 0, addr, &addrlen)) == -1) //receive the ack
-		{
-			printf("error when receiving\n");
-			exit(1);
+		if(counter == 0 || counter == 2){
+			if ((n = recvfrom(sockfd, &ack, 2, 0, addr, &addrlen)) == -1) //receive the ack
+			{
+				printf("error when receiving\n");
+				exit(1);
+			}
+			if ((ack.len == 0) && (ack.num == 1)) //if it is ACK
+			{
+				gettimeofday(&recvt, NULL); //get current time
+				tv_sub(&recvt, &sendt);		// get the whole trans time
+				time_inv += (recvt.tv_sec) * 1000.0 + (recvt.tv_usec) / 1000.0;
+				printf("Time(ms) : %.3f\n", (float)time_inv);
+			}
+			else
+			{
+				return (-1);
+				printf("Error in transmission\n");
+			}
 		}
-		if ((ack.len == 0) && (ack.num == 1)) //if it is ACK
-		{
-			gettimeofday(&recvt, NULL); //get current time
-			tv_sub(&recvt, &sendt);		// get the whole trans time
-			time_inv += (recvt.tv_sec) * 1000.0 + (recvt.tv_usec) / 1000.0;
-			printf("Time(ms) : %.3f\n", (float)time_inv);
-		}
-		else
-		{
-			return (-1);
-			printf("Error in transmission\n");
-		}
-
+		counter++;
 		ci += slen;
 	}
 	return time_inv;

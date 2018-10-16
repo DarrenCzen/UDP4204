@@ -46,6 +46,7 @@ void str_ser1(int sockfd)
 	struct sockaddr_in addr;
 	len = sizeof(struct sockaddr_in);
 
+	int counter = 0;
 	long lseek = 0;
 	end = 0;
 
@@ -53,6 +54,7 @@ void str_ser1(int sockfd)
 
 	while (!end)
 	{
+		counter = (counter == 3) ? 0 : counter;
 		if ((n = recvfrom(sockfd, &recvs, DATALEN, 0, (struct sockaddr *)&addr, &len)) == -1) //receive the packet
 		{
 			printf("error when receiving\n");
@@ -67,11 +69,14 @@ void str_ser1(int sockfd)
 		lseek += n;
 		ack.num = 1;
 		ack.len = 0;
-		if ((n = sendto(sockfd, &ack, 2, 0, (const struct sockaddr *)&addr, len)) == -1)
-		{
-			printf("send error!"); //send the ack
-			exit(1);
+		if(counter == 0 || counter == 2){	
+			if ((n = sendto(sockfd, &ack, 2, 0, (const struct sockaddr *)&addr, len)) == -1)
+			{
+				printf("send error!"); //send the ack
+				exit(1);
+			}
 		}
+		counter++;
 	}
 
 	if ((fp = fopen("myTCPreceive.txt", "wt")) == NULL)

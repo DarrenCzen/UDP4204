@@ -106,6 +106,7 @@ void str_ser(int sockfd)
 		printf("File doesn't exit\n");
 		exit(0);
 	}
+	buf[lseek - 1] = '\0';
 	fwrite (buf , 1 , lseek , fp);					//write data into file
 	fclose(fp);
 	printf("a file has been successfully received!\nthe total data received is %d bytes\n", (int)lseek);
