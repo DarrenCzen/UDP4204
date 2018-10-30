@@ -102,9 +102,9 @@ float str_cli1(FILE *fp, int sockfd, struct sockaddr *addr, int addrlen, int *le
 	/*** the whole file is loaded in the buffer. ***/
 	buf[lsize] = '\0';			//append the end byte
 	
+	gettimeofday(&sendt, NULL); //get the current time
 	while (ci <= lsize)
 	{
-		gettimeofday(&sendt, NULL); //get the current time
 		counter = (counter == 3) ? 0 : counter;
 		if ((lsize + 1 - ci) <= DATALEN)
 			slen = lsize + 1 - ci;
@@ -123,14 +123,7 @@ float str_cli1(FILE *fp, int sockfd, struct sockaddr *addr, int addrlen, int *le
 				printf("error when receiving\n");
 				exit(1);
 			}
-			if ((ack.len == 0) && (ack.num == 1)) //if it is ACK
-			{
-				gettimeofday(&recvt, NULL); //get current time
-				tv_sub(&recvt, &sendt);		// get the whole trans time
-				time_inv += (recvt.tv_sec) * 1000.0 + (recvt.tv_usec) / 1000.0;
-				printf("Time(ms) : %.3f\n", (float)time_inv);
-			}
-			else
+			if (!((ack.len == 0) && (ack.num == 1))) //if it is ACK
 			{
 				return (-1);
 				printf("Error in transmission\n");
@@ -139,6 +132,9 @@ float str_cli1(FILE *fp, int sockfd, struct sockaddr *addr, int addrlen, int *le
 		counter++;
 		ci += slen;
 	}
+	gettimeofday(&recvt, NULL); //get current time
+	tv_sub(&recvt, &sendt);		// get the whole trans time
+	time_inv += (recvt.tv_sec) * 1000.0 + (recvt.tv_usec) / 1000.0;	
 	return time_inv;
 }
 
